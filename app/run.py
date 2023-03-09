@@ -40,8 +40,8 @@ def index():
     
     # extract data needed for visuals
     # TODO: Below is an example - modify to extract data for your own visuals
-    columns_counts = df.shape[0]
-    column_names = df.columns
+    columns_counts = df.groupby('genre').count()['message']
+    column_names =  list(columns_counts.index)
    
     
     # create visuals
@@ -78,8 +78,34 @@ def index():
 # web page that handles user query and displays model results
 @app.route('/go')
 def go():
+    columns_counts = df.shape[0]
+    column_names = df.columns
     # save user input in query
     query = request.args.get('query', '') 
+    graphs = [
+        {
+            'data': [
+                Bar(
+                    x=column_names,
+                    y=columns_counts
+                )
+            ],
+
+            'layout': {
+                'title': 'Disaster Categories',
+                'yaxis': {
+                    'title': "Count"
+                },
+             
+            }
+        }
+     
+    ]
+
+    
+    # encode plotly graphs in JSON
+    ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
+    graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
     # use model to predict classification for query
     classification_labels = model.predict([query])[0]
     classification_results = dict(zip(df.columns[4:], classification_labels))
@@ -87,6 +113,7 @@ def go():
     # This will render the go.html Please see that file. 
     return render_template(
         'go.html',
+         ids=ids, graphJSON=graphJSON,
         query=query,
         classification_result=classification_results
     )
