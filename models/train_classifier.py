@@ -29,7 +29,7 @@ nltk.download('wordnet')
 
 def load_data(database_filepath):
     engine = create_engine(f'sqlite:///{database_filepath}')
-    df =  pd.read_sql_table("Data", con=engine)
+    df =  pd.read_sql_table("dataclean", con=engine)
     X = df['message']
     Y = df.iloc[:,( df.columns !='id') & (df.columns!='message')& (df.columns!='original')&       (df.columns!='genre')]
     return X,Y
@@ -51,6 +51,11 @@ def build_model():
     ('tfidf', TfidfTransformer()),
     ('clf', MultiOutputClassifier(RandomForestClassifier()))
 ])
+    parameters = {
+        'clf__estimator__n_estimators' : [95, 100]
+    }
+    cv = GridSearchCV(pipeline, param_grid=parameters, verbose=3)
+    return cv
 
     return pipeline
 def evaluate_model(model, X_test,Y_test):
